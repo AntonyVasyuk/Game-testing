@@ -10,7 +10,7 @@
 //float G = 6.67430 * std::pow(10, -11);
 //int WARP = 4 * 10000;
 
-float G = 10;
+float G = 10000;
 int WARP = 1;
 
 
@@ -123,11 +123,13 @@ int main()
 {
     sf::RenderWindow window(sf::VideoMode({ WIDTH, HEIGHT }), "First time");
 
+    window.setFramerateLimit(24);
+
     std::tuple<short, short, short> c1, c2;
     c1 = std::make_tuple(255, 255, 255);
     c2 = std::make_tuple(0, 255, 255);
 
-    Planet a(WIDTH / 2, HEIGHT / 2, 0, 0, 1, 20, c1), b(WIDTH / 2 + 200, HEIGHT / 2, 0, 0, 1, 10, c2);
+    Planet a(WIDTH / 2, HEIGHT / 2, 0, 0, 1, 20, c1), b(WIDTH / 2 + 200, HEIGHT / 2, 0, -5, 1, 10, c2);
 
     while (window.isOpen())
     {
