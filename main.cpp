@@ -6,31 +6,39 @@
 
 #define WIDTH 800
 #define HEIGHT 800
-#define G 10
+
+//float G = 6.67430 * std::pow(10, -11);
+//int WARP = 4 * 10000;
+
+float G = 10000;
+int WARP = 1;
 
 
 class Object
 {
 private:
-    int x;
-    int y;
-    int vx;
-    int vy;
+    float x;
+    float y;
+    float vx;
+    float vy;
     int mass;
 
 public:
-    Object(int x, int y, int vx, int vy, int mass);
-    std::pair<int, int> get_coordinates();
+    Object(float x, float y, float vx, float vy, int mass);
+    std::pair<float, float> get_coordinates();
     int get_mass();
-    void add_velocity(int dvx = 0, int dvy = 0);
+    void add_velocity(float dvx = 0, float dvy = 0);
     void add_velocity(Object& other, float dv = 0);
+    void update();
 };
 
 
 float distance_between_objects(Object a, Object b);
 
 
-Object::Object(int x, int y, int vx, int vy, int mass)
+//Object functions
+
+Object::Object(float x, float y, float vx, float vy, int mass)
 {
     this->x = x;
     this->y = y;
@@ -39,50 +47,60 @@ Object::Object(int x, int y, int vx, int vy, int mass)
     this->mass = mass;
 }
 
-std::pair<int, int> Object::get_coordinates() { return std::pair<int, int>(x, y); }
+std::pair<float, float> Object::get_coordinates() { return std::pair<float, float>(x, y); }
 
 int Object::get_mass() { return this->mass; }
 
-void Object::add_velocity(int dvx, int dvy)
+void Object::add_velocity(float dvx, float dvy)
 {
     vx += dvx;
     vy += dvy;
 }
 
-void Object::add_velocity(Object &other, float dv)
+void Object::add_velocity(Object& other, float dv)
 {
     float d = distance_between_objects(*this, other);
 
-    float cos = (x - other.get_coordinates().first) / d;
-    float sin = (y - other.get_coordinates().second) / d;
+    float cos = (other.get_coordinates().first - x) / d;
+    float sin = (other.get_coordinates().second - y) / d;
 
     vx += dv * cos;
     vy += dv * sin;
 }
 
+void Object::update()
+{
+    this->x += this->vx * WARP;
+    this->y += this->vy * WARP;
+}
 
-class Planet: public Object
+//end of Object functions
+
+
+//Planet class definition
+
+class Planet : public Object
 {
 private:
     int radius;
-    std::tuple<int, int, int> color;
-    
+    std::tuple<short, short, short> color;
+
 public:
-    Planet(int x, int y, int vx, int vy, int mass, int radius, std::tuple<int, int, int> color): Object(x, y, vx, vy, mass)
+    Planet(float x, float y, float vx, float vy, int mass, int radius, std::tuple<short, short, short> color) : Object(x, y, vx, vy, mass)
     {
         this->radius = radius;
         this->color = color;
     }
 
-    void Attract_to_object(Object &other)
+    void Attract_to_object(Object& other)
     {
         float dv = (G * other.get_mass()) / std::pow(distance_between_objects(*this, other), 2);
-        this->add_velocity(other, dv);
+        this->add_velocity(other, dv * WARP);
     }
 
-    std::tuple<int, int, int> get_color() { return this->color; }
+    std::tuple<short, short, short> get_color() { return this->color; }
 
-    void draw(sf::RenderWindow &window)
+    void draw(sf::RenderWindow& window)
     {
         sf::CircleShape circle(radius);
 
@@ -94,7 +112,7 @@ public:
         circle.setFillColor(sf::Color(std::get<0>(color), std::get<1>(color), std::get<2>(color)));
         //circle.setFillColor(sf::Color(255, 255, 255));
 
-        std::cout << '1';
+        //std::cout << '1';
 
         window.draw(circle);
     }
@@ -105,11 +123,13 @@ int main()
 {
     sf::RenderWindow window(sf::VideoMode({ WIDTH, HEIGHT }), "First time");
 
-    std::tuple<int, int, int> c1, c2;
+    window.setFramerateLimit(24);
+
+    std::tuple<short, short, short> c1, c2;
     c1 = std::make_tuple(255, 255, 255);
     c2 = std::make_tuple(0, 255, 255);
 
-    Planet a(WIDTH / 2, HEIGHT / 2, 0, 0, 10, 20, c1), b(WIDTH / 2 + 50, HEIGHT / 2, 0, -1, 1, 10, c2);
+    Planet a(WIDTH / 2, HEIGHT / 2, 0, 0, 1, 20, c1), b(WIDTH / 2 + 200, HEIGHT / 2, 0, -5, 1, 10, c2);
 
     while (window.isOpen())
     {
@@ -124,6 +144,9 @@ int main()
         window.clear();
 
         b.Attract_to_object(a);
+
+        a.update();
+        b.update();
 
         a.draw(window);
         b.draw(window);
