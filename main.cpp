@@ -95,34 +95,41 @@ private:
     std::tuple<short, short, short> color;
 
 public:
-    Planet(float x, float y, float vx, float vy, int mass, int radius, std::tuple<short, short, short> color) : Object(x, y, vx, vy, mass)
-    {
-        this->radius = radius;
-        this->color = color;
-    }
+    Planet(float x, float y, float vx, float vy, int mass, int radius, std::tuple<short, short, short> color);
 
-    std::tuple<short, short, short> get_color() { return this->color; }
+    std::tuple<short, short, short> get_color();
 
-    void draw(sf::RenderWindow& window, int scale, float x, float y)
-    {
-        sf::CircleShape circle(radius / scale + 10);
-
-        auto c = this->get_coordinates();
-        circle.setPosition({ ((float)c.first) / scale + x, ((float)c.second) / scale + y });
-
-        //std::cout << radius / scale << '\n';
-
-        auto color = this->get_color();
-
-        circle.setFillColor(sf::Color(std::get<0>(color), std::get<1>(color), std::get<2>(color)));
-        //circle.setFillColor(sf::Color(255, 255, 255));
-        //sf::Color()
-
-        //std::cout << '1';
-
-        window.draw(circle);
-    }
+    void draw(sf::RenderWindow& window, int scale, float x, float y);
 };
+
+
+Planet::Planet(float x, float y, float vx, float vy, int mass, int radius, std::tuple<short, short, short> color) : Object(x, y, vx, vy, mass)
+{
+    this->radius = radius;
+    this->color = color;
+}
+
+std::tuple<short, short, short> Planet::get_color() { return this->color; }
+
+void Planet::draw(sf::RenderWindow& window, int scale, float x, float y)
+{
+    sf::CircleShape circle(radius / scale + 10);
+
+    auto c = this->get_coordinates();
+    circle.setPosition({ ((float)c.first) / scale + x, ((float)c.second) / scale + y });
+
+    //std::cout << radius / scale << '\n';
+
+    auto color = this->get_color();
+
+    circle.setFillColor(sf::Color(std::get<0>(color), std::get<1>(color), std::get<2>(color)));
+    //circle.setFillColor(sf::Color(255, 255, 255));
+    //sf::Color()
+
+    //std::cout << '1';
+
+    window.draw(circle);
+}
 
 
 int main()
@@ -149,6 +156,7 @@ int main()
 
         window.clear();
 
+        a.attract_to_object(b);
         b.attract_to_object(a);
 
         a.update();
