@@ -86,6 +86,23 @@ void Object::update()
 //end of Object functions
 
 
+class Camera : public Object
+{
+private:
+    float dx;
+    float dy;
+    float rotation;
+    int scale;
+
+public:
+    Camera(float x, float y, float dx, float dy, float rotaion, int scale);
+    std::pair<float, float> get_projection(Object& other);
+    int get_scale() { return this->scale; }
+    std::pair<float, float> get_delta() { return std::pair<float, float>(dx, dy); }
+    void move(float dx, float dy);
+};
+
+
 //Planet class definition
 
 class Planet : public Object
@@ -99,24 +116,29 @@ public:
 
     std::tuple<short, short, short> get_color();
 
-    void draw(sf::RenderWindow& window, int scale, float x, float y);
+    void draw(sf::RenderWindow& window, Camera camera);
 };
 
+
+//Planet class functions
 
 Planet::Planet(float x, float y, float vx, float vy, int mass, int radius, std::tuple<short, short, short> color) : Object(x, y, vx, vy, mass)
 {
     this->radius = radius;
+
     this->color = color;
 }
 
 std::tuple<short, short, short> Planet::get_color() { return this->color; }
 
-void Planet::draw(sf::RenderWindow& window, int scale, float x, float y)
+void Planet::draw(sf::RenderWindow& window, Camera camera)
 {
+    int scale = camera.get_scale();
+
     sf::CircleShape circle(radius / scale + 10);
 
-    auto c = this->get_coordinates();
-    circle.setPosition({ ((float)c.first) / scale + x, ((float)c.second) / scale + y });
+    auto c = camera.get_projection(*this);
+    circle.setPosition({ c.first, c.second });
 
     //std::cout << radius / scale << '\n';
 
@@ -131,6 +153,44 @@ void Planet::draw(sf::RenderWindow& window, int scale, float x, float y)
     window.draw(circle);
 }
 
+// end of Planet functions
+
+
+Camera::Camera(float x, float y, float dx, float dy, float rotaion, int scale) : Object(x, y, 0, 0, 0)
+{
+    this->dx = dx;
+    this->dy = dy;
+    this->rotation = rotaion;
+    this->scale = scale;
+}
+
+std::pair<float, float> Camera::get_projection(Object &other)
+{
+    float cosa = std::cos(this->rotation), sina = std::sin(this->rotation);
+
+    auto cc = this->get_coordinates();
+    auto c1 = other.get_coordinates();
+    float x2 = c1.first - cc.first, y2 = c1.second - cc.second;
+
+    x2 = x2 * cosa - y2 * sina;
+    y2 = x2 * sina + y2 * cosa;
+
+    int scale = this->get_scale();
+    x2 /= scale;
+    y2 /= scale;
+
+    auto d = this->get_delta();
+    x2 = x2 + d.first;
+    y2 = y2 + d.second;
+
+    return std::pair<float, float>(x2, y2);
+}
+
+void Camera::move(float dx, float dy)
+{
+    //this
+}
+
 
 int main()
 {
@@ -142,6 +202,8 @@ int main()
     c1 = std::make_tuple(50, 70, 219);
     c2 = std::make_tuple(217, 213, 206);
 
+    Camera camera(0, 0, (float)WIDTH / 2, (float)HEIGHT / 2, 0, SCALE);
+
     Planet a(0, 0, 0, 0, 5.972e8, 6378e3, c1), b(384399e3, 0, 0, -1022, 7.346e6, 1737e3, c2);
 
     while (window.isOpen())
@@ -152,18 +214,21 @@ int main()
             // "close requested" event: we close the window
             if (event->is<sf::Event::Closed>())
                 window.close();
+
+            //if (event->is<sf::Event::KeyPressed>())
+            //    camera.
         }
 
         window.clear();
 
-        a.attract_to_object(b);
+        //a.attract_to_object(b);
         b.attract_to_object(a);
 
-        a.update();
+        //a.update();
         b.update();
 
-        a.draw(window, SCALE, WIDTH / 2, HEIGHT / 2);
-        b.draw(window, SCALE, WIDTH / 2, HEIGHT / 2);
+        a.draw(window, camera);
+        b.draw(window, camera);
 
         window.display();
 
